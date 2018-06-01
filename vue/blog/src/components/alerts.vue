@@ -1,7 +1,7 @@
 <template>
-    <div class="alert">
+    <div class="alert" v-show="isShow">
 
-        <transition name="fade">
+        <transition name="fade" >
             <div  class="model">
                 <p>{{message}}</p>
             </div>
@@ -14,7 +14,7 @@
 .model {
   width: 250px;
   height: 100px;
-  border: 1px solid #ccc;
+  border: 1px solid #52b983;
   border-radius: 10px;
   background: #f9f9f9;
   text-align: center;
@@ -25,7 +25,7 @@
   right: 0;
   bottom: 0;
   margin: auto;
-  color: #666;
+  color: #52b983;
   z-index: 9999;
 }
 
@@ -33,10 +33,23 @@
 
 <script>
     export default {
-        name: 'alert',
+        name: 'alerts',
+        props: ['message'],
         data(){
             return {
-                message: '这是弹窗'
+                isShow: false
+            }
+        },
+        complated: {
+
+        },
+        methods: {
+            show: function(){
+                var _this = this;
+                _this.isShow = true;
+                setTimeout(function(){
+                    _this.isShow = false;
+                },1000)
             }
         }
     }

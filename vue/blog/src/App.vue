@@ -8,7 +8,9 @@
        <ul class="ul">
          <li  v-bind:class="[Index == 1? 'act': '', 'item']" @click="changeIndex( 1)"><router-link :to="{path:'/home'}">首页</router-link></li>
          <li  v-bind:class="[Index == 2? 'act': '', 'item']" @click="changeIndex( 2)"><router-link :to="{path:'/about'}">关于</router-link></li>
-         <li v-if="userName" v-bind:class="[Index == 3? 'act': '', 'item']" @click="changeIndex( 3)"><router-link :to="{path:'/addPage'}">添加文章</router-link></li>
+         <li v-if="userName" v-bind:class="[Index == 3? 'act': '', 'item']" @click="changeIndex( 3)"><router-link :to="{path:'/pageList'}">列表文章</router-link></li>
+         <li v-if="userName" v-bind:class="[Index == 4? 'act': '', 'item']" @click="changeIndex( 4)"><router-link :to="{path:'/addPage'}">添加文章</router-link></li>
+
 
        </ul>
     </div>
@@ -74,21 +76,22 @@
    </form>
  </div>
 
-<alert></alert>
+<alerts ref="alerts" v-bind:message="message"></alerts>
 </div>
 </template>
 
 <script>
-import alert from './components/alert.vue'
+import alerts from './components/alerts.vue';
+import {LocalStorage} from './utils/util.js';
 export default {
   name: 'App',
   components: {
-    alert
+    alerts
   },
   data() {
     return {
       userName:'',
-      Index: 1,
+      Index: 0,
       showLogin: false,
       showRegister: false,
       showMask: false,
@@ -97,19 +100,23 @@ export default {
       registerPsd: '',
       registerName: '',
       email: '',
-      message: '',
-      showMsg: false
+      message: ''
     }
   },
   created() {
-    this.userName = window.localStorage.getItem('userName') 
+    // this.userName = window.localStorage.getItem('userName') 
+    this.userName = LocalStorage.getItem('userName') 
     var path = this.$route.path;
     if(path == '/home'){
       this.Index =1;
     }else if(path == '/about'){
       this.Index =2;
-    }else if(path == '/addPage'){
+    }else if(path == '/pageList'){
       this.Index =3;
+    }else if(path == '/addPage'){
+      this.Index =4;
+    }else if(path == '/detail'){
+      this.Index =5;
     }
   },
   computed: {
@@ -120,7 +127,6 @@ export default {
   methods: {
     changeIndex: function( index){
       this.Index = index
-      console.log(this.$route);
     },
     showLoginFn: function(){
       this.showLogin = !this.showLogin;
@@ -137,26 +143,22 @@ export default {
         psd: _this.loginPsd
       }).then(res=>{
         console.log(res)
+         // 显示提示
+          _this.message = res.message;
+          _this.$refs.alerts.show();
          if(res.code == 1){
-              _this.showMsg = !_this.showMsg;
-              _this.message = res.message;
-
+             
               _this.userName = res.list.name;
-              window.localStorage.setItem('userName',res.list.name)
-              window.localStorage.setItem('userId',res.list.id)
-              window.localStorage.setItem('token',res.list.token)
+              // 保存用户信息
+              LocalStorage.setItem('userName',res.list.name,3);
+              LocalStorage.setItem('userId',res.list.id,3);
+              LocalStorage.setItem('token',res.list.token,3);
+
               
               setTimeout(function(){
-                _this.showMsg = false;
                 _this.showLogin = !_this.showLogin;
                 _this.showMask = !_this.showMask;
                 window.location.reload();
-              },1000)
-          }else{
-              _this.showMsg = !_this.showMsg;
-              _this.message = res.message;
-              setTimeout(function(){
-                _this.showMsg = false;
               },1000)
           }
 
@@ -223,6 +225,7 @@ export default {
 .content {
     width: 1000px;
     margin: 0 auto;
+    height: auto;
 }
 
 .header {
@@ -358,3 +361,4 @@ export default {
 }
 
 </style>
+

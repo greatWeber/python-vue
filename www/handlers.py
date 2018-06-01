@@ -158,27 +158,30 @@ def editPage(request):
     '''
     params = yield from request.json()
     kw = dict(**params)
-    userId = kw['userId']
     title = kw['title']
     pid= kw['id']
+    userId= kw['userId']
     if not userId or not userId.strip():
         result = dict(code=-1,message="请重新登录")
-    elif not pid or not pid.strip():
+    if not pid or not pid.strip():
         result = dict(code=-1, message="参数有误")
     elif not title or not title.strip():
         result = dict(code=-1, message="标题不能为空")
     else:
-        page = Blog(id=pid,user_id=userId,user_name=kw['userName'],user_image=kw['userImage'],title=title,info=kw['info'],thumb=kw['thumb'],content=kw['content'])
-        yield from page.update()
+        # page = Blog(id=pid,user_id=userId,title=title,info=kw['info'],thumb=kw['thumb'],content=kw['content'])
+        yield from Blog.update2(id=pid,user_id=userId,title=title,info=kw['info'],thumb=kw['thumb'],content=kw['content'])
         result = dict(code=1,message="文章修改成功")
-    r = web.Response()
-    r.content_type='application/json'
-    r.body=json.dumps(result,ensure_ascii=False).encode('utf-8')
-    return r
+    # r = web.Response()
+    # r.content_type='application/json'
+    # r.body=json.dumps(result,ensure_ascii=False).encode('utf-8')
+    return result
 
 
 @get('/api/getPage')
 def getPage(request,*,pageNum=1,pageSize=10):
+    '''
+    获取文章列表
+    '''
     index = get_page_index(pageNum)
     size = get_page_index(pageSize)
     num = yield from Blog.findNumber('count(id)')
@@ -186,11 +189,87 @@ def getPage(request,*,pageNum=1,pageSize=10):
     logging.info('page:%s' % p)
     if num == 0:
         return dict(page=p,blogs=())
-    blogs = yield from Blog.findAll(orderBy='created_time desc',limit=(p['offset'],p['size']))
+    blogs = yield from Blog.findAll(where='is_del=0',orderBy='created_time desc',limit=(p['offset'],p['size']))
     for blog in blogs:
         blog['created_time'] = format_time(blog['created_time'])
 
     return dict(page=p,blogs=blogs)
+
+@post('/api/delPage')
+@asyncio.coroutine
+@check_token
+@asyncio.coroutine
+def delPage(request):
+    '''
+    删除文章
+    '''
+    params = yield from request.json()
+    kw = dict(**params)
+    pid = kw['id']
+    if not pid or not pid.strip():
+        result = dict(code=-1,message="id不能为空")
+    yield from Blog.update2(id=pid,is_del=True)
+    result = dict(code=1,message="删除成功")
+    return result;
+    
+
+@get('/api/detail')
+@asyncio.coroutine
+def detail(request,*,id):
+    '''
+    获取文章详情
+    '''
+
+    # params = yield from request.json()
+    # kw = dict(**params)
+    # id = kw['id']
+    if not id or not id.strip():
+        result = dict(code=-1,message="文章id不能为空")
+    page = yield from Blog.find(id)
+    if len(page) < 0:
+        result = dict(code=-1,message="文章不存在")
+    else:
+        if page['is_del'] == 1:
+            result = dict(code=-1,message="该文章已经被删除，请到回收站还原")
+        else:
+            page['created_time'] = format_time(page['created_time'])
+            result = dict(code=1,blog=page)
+
+    return result
+
+
+@post('/api/addComment')
+@asyncio.coroutine
+@check_token
+@asyncio.coroutine
+def addComment(request):
+    '''
+    添加文章
+    '''
+    params = yield from request.json()
+    kw = dict(**params)
+    userId = kw['userId']
+    blogId = kw['blogId']
+
+    content = kw['content']
+    if not userId or not userId.strip():
+        result = dict(code=-1,message="请重新登录")
+    elif not blogId or not blogId.strip():
+        result = dict(code=-1, message="blogId不能为空")
+    elif not content or not content.strip():
+        result = dict(code=-1, message="留言不能为空")
+    else:
+        comment = Comment(user_id=userId,blog_id=blogId,user_name=kw['userName'],content=content)
+        yield from comment.save()
+        result = dict(code=1,message="留言成功")
+    # r = web.Response()
+    # r.content_type='application/json'
+    # r.body=json.dumps(result,ensure_ascii=False).encode('utf-8')
+    return result
+
+
+
+
 
 
 @post('/api/upload')

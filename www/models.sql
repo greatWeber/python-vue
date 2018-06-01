@@ -29,6 +29,7 @@ create table blogs (
     `title` varchar(50) not null,
     `info` varchar(200) not null,
     `content` mediumtext not null,
+    `comment_num` TINYINT not null,
     `created_time` real not null,
     `is_del` bool not null,
     key `idx_created_time` (`created_time`),

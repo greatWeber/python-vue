@@ -133,7 +133,6 @@ class ModelMetaClass(type):
                     primarykey = k
                 else: 
                     fields.append(k)
-
         if not primarykey : 
             raise BaseException('primarykey not found')
         for k in mappings.keys():
@@ -154,6 +153,7 @@ class Model(dict, metaclass=ModelMetaClass):
     #metaclass: 允许你创建类或者修改类。换句话说，你可以把类看成是metaclass创建出来的“实例”。
 
     def __init__(self,**kw):
+
         super(Model,self).__init__(**kw)
 
     def __getattr__(self,key):
@@ -242,14 +242,32 @@ class Model(dict, metaclass=ModelMetaClass):
         if rows != 1:
             logging.warn('failed to insert record: affected rows %s' % rows)
 
-
     @asyncio.coroutine
     def update(self):
+        
         args = list(map(self.getValue, self.__fields__))
         args.append(self.getValueOrDefault(self.__primary_key__))
         rows = yield from execute(self.__update__, args)
         if rows != 1:
             logging.warn('failed to update record: affected rows %s' % rows)
+
+    @classmethod
+    @asyncio.coroutine
+    def update2(cls,**kw):
+        fields = []
+        value = []
+
+        params = dict(**kw)
+        for k,v in params.items():
+            fields.append(k)
+            value.append(v)
+        args =  value
+        args.append(params[cls.__primary_key__])
+        _update_ = 'UPDATE `%s` SET %s WHERE `%s`=?' % (cls.__table__,', '.join(map(lambda f: '%s=?'%(cls.__mappings__.get(f).name or f ), fields)), cls.__primary_key__)
+        rows = yield from execute(_update_, args)
+        if rows != 1:
+            logging.warn('failed to update record: affected rows %s' % rows)
+
 
     @asyncio.coroutine
     def remove(self):

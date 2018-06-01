@@ -28,10 +28,9 @@ def check_token(func):
                 err = True
             else:
                 now = datetime.datetime.now()
-                end = now - datetime.timedelta(hours=3)
+                end = now - datetime.timedelta(hours=3) #有效期
                 nowNum = time.mktime(now.timetuple())
                 endNum = time.mktime(end.timetuple())
-                logging.info(token[0])
                 lastTime = token[0]['last_time']
 
                 if lastTime < endNum :
@@ -55,7 +54,6 @@ def createToken(uid):
     '''
     生成token
     '''
-    logging.info('------------------------------123123%s' % uid)
     shal = '%s=%s=%s' % ('Token',uid, time.time())
     shal_uid = hashlib.sha1(shal.encode('utf-8')).hexdigest()
 

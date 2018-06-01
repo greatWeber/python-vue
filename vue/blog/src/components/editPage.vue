@@ -17,8 +17,8 @@
             </div>
             <quillEditor v-model="content"></quillEditor>
             <div class="form-btn">
-                <span class="btn btn-sure" @click="addPageFn">添加</span>
-                <span class="btn btn-cancel">重置</span>
+                <span class="btn btn-sure" @click="addPageFn">修改</span>
+                <span class="btn btn-cancel" @click="back">返回</span>
             </div>
         </form>
 
@@ -36,25 +36,39 @@ import 'quill/dist/quill.bubble.css'
 import {LocalStorage} from '../utils/util.js'
 import { quillEditor } from 'vue-quill-editor'
     export default {
-        name: 'addPage',
+        name: 'editPage',
         data(){
             return {
+                userId: '',
                 imgsrc: '',
                 title: '',
                 info: '',
-                userId: '',
-                userName: '',
-                userImage: '',
                 content: '',
                 thumb: '',
                 token: '',
-                message: ''
+                message: '',
+                id: '',
+                token: ''
             }
         },
         created: function(){
-            this.userId = LocalStorage.getItem('userId');
-            this.userName = LocalStorage.getItem('userName');
-            this.token = LocalStorage.getItem('token');
+            let _this = this;
+           _this.id = _this.$route.params.id;
+           _this.userId = LocalStorage.getItem('userId');
+           _this.token = LocalStorage.getItem('token');
+           _this.$get('/api/detail',{id: _this.id}).then((res)=>{
+                if(res.code == 1){
+                    _this.title = res.blog.title;
+                    _this.imgsrc = _this.HOST+res.blog.thumb;
+                    _this.thumb = res.blog.thumb;
+                    _this.info = res.blog.info;
+                    _this.content = res.blog.content;
+                }else{
+                    _this.message = res.message;
+                    _this.$refs.alerts.show();
+                }
+           })
+           
         },
         components: {
             quillEditor
@@ -62,8 +76,7 @@ import { quillEditor } from 'vue-quill-editor'
         methods: {
             upload: function(e){
                 var _this = this;
-                console.log(e)
-                console.log(e.target.files[0])
+               
                 var file = e.target.files[0];
                 var formData = new FormData();
                 formData.append('image',file);
@@ -80,10 +93,9 @@ import { quillEditor } from 'vue-quill-editor'
             },
             addPageFn: function(){
                 var _this = this;
-                _this.$post('/api/addPage',{
+                _this.$post('/api/editPage',{
                     userId: _this.userId,
-                    userName: _this.userName,
-                    userImage: _this.userImage,
+                    id: _this.id,
                     title: _this.title,
                     thumb: _this.thumb,
                     info: _this.info,
@@ -95,6 +107,9 @@ import { quillEditor } from 'vue-quill-editor'
                     _this.message = res.message;
                     _this.$refs.alerts.show();
                 })
+            },
+            back: function(){
+                window.history.back(-1);
             }
         }
     }

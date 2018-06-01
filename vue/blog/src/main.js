@@ -6,17 +6,19 @@ import router from './router'
 import {Get, Post} from './utils/http'
 import axios from 'axios'
 
-// 基础组件
-import alert from './components/alert'
+import alerts from './components/alerts.vue'
+import confirms from './components/confirms.vue'
+
+
 
 Vue.prototype.$get = Get;
 Vue.prototype.$post = Post;
 Vue.prototype.$ajax = axios;
 Vue.prototype.HOST = 'http://127.0.0.1:8088/';
 
-Vue.component(alert)
-
-Vue.config.productionTip = false
+Vue.component('alerts',alerts);
+Vue.component('confirms',confirms);
+Vue.config.productionTip = false;
 
 /* eslint-disable no-new */
 new Vue({

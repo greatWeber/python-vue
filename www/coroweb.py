@@ -114,7 +114,6 @@ class RequestHandler(object):
                 elif ct.startswith('application/x-www-form-urlencoded') or ct.startswith('multipart/form-data'):
                     params = yield from request.post()
                     kw = dict(**params)
-                    logging.info('kw-------------------%s' % kw)
                 else:
                     return HTTPBadRequest('Unsupported Content-type: %s' % request.content_type)
             if request.method == 'GET':
