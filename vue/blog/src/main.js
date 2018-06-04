@@ -6,8 +6,10 @@ import router from './router'
 import {Get, Post} from './utils/http'
 import axios from 'axios'
 
-import alerts from './components/alerts.vue'
-import confirms from './components/confirms.vue'
+import alerts from './components/common/alerts.vue'
+import confirms from './components/common/confirms.vue'
+import paging from './components/common/paging.vue'
+import load from './components/common/load.vue'
 
 
 
@@ -18,6 +20,8 @@ Vue.prototype.HOST = 'http://127.0.0.1:8088/';
 
 Vue.component('alerts',alerts);
 Vue.component('confirms',confirms);
+Vue.component('paging',paging);
+Vue.component('load',load);
 Vue.config.productionTip = false;
 
 /* eslint-disable no-new */

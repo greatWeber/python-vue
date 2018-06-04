@@ -14,10 +14,13 @@
                 </router-link>
             </div>
         </div>
+        <paging ref="paging"></paging>
+        <load ref="load"></load>
     </div>
 </template>
 
 <script>
+let _this;
     export default {
         name: 'home',
         data(){
@@ -25,19 +28,33 @@
                 pageList: [],
                 pageNum:1,
                 pageSize: 10,
-                host: this.HOST
+                total: 1,
+                host: this.HOST,
             }
         },
         created(){
-            var _this = this;
-            this.$get('/api/getPage',{pageNum:_this.pageNum,pageSize:_this.pageSize}).then(res=>{
-                console.log(res);
-                _this.pageList = res.blogs;
-            })
+            _this = this;
+            
+        },
+        mounted(){
+            _this.getList();
+            _this.$refs.paging.init(_this.total, function(index){
+                _this.pageNum = index;
+                _this.getList();
+            });
         },
         methods: {
            imgsrc: function(img){
             return this.host+img
+           },
+           getList: ()=>{
+            _this.$refs.load.show();
+            _this.$get('/api/getPage',{pageNum:_this.pageNum,pageSize:_this.pageSize}).then(res=>{
+                _this.$refs.load.hide();
+                 
+                _this.pageList = res.blogs;
+                _this.total = res.page.total;
+            })
            }
         }
     }

@@ -1,11 +1,11 @@
 #-*-coding: UTF-8-*-
 #handlers.py
 
-import re, time, json, logging, hashlib, base64, asyncio, os, functools, datetime
+import re, time, json, logging, hashlib, base64, asyncio, os, functools, datetime, math
 
 from coroweb import get, post
 
-from utils import check_token, format_time, get_page_index, save_img
+from utils import check_token, format_time, get_page_index, save_img, del_img
 
 from apis import APIValueError, APIResourceNotFoundError
 
@@ -184,16 +184,82 @@ def getPage(request,*,pageNum=1,pageSize=10):
     '''
     index = get_page_index(pageNum)
     size = get_page_index(pageSize)
-    num = yield from Blog.findNumber('count(id)')
+    where = 'is_del=0'
+    num = yield from Blog.findNumber('count(*)', where=where)
     p = Page(num,index,size)
     logging.info('page:%s' % p)
     if num == 0:
         return dict(page=p,blogs=())
-    blogs = yield from Blog.findAll(where='is_del=0',orderBy='created_time desc',limit=(p['offset'],p['size']))
+    blogs = yield from Blog.findAll(where=where,orderBy='created_time desc',limit=(p['offset'],p['size']))
     for blog in blogs:
         blog['created_time'] = format_time(blog['created_time'])
 
     return dict(page=p,blogs=blogs)
+
+@get('/api/getDelPage')
+def getDelPage(request,*,pageNum=1,pageSize=10):
+    '''
+    获取已删除的文章列表
+    '''
+    index = get_page_index(pageNum)
+    size = get_page_index(pageSize)
+    where = 'is_del=1'
+    num = yield from Blog.findNumber('count(*)', where=where)
+    p = Page(num,index,size)
+    logging.info('page:%s' % p)
+    if num == 0:
+        return dict(page=p,blogs=())
+    blogs = yield from Blog.findAll(where=where,orderBy='created_time desc',limit=(p['offset'],p['size']))
+    for blog in blogs:
+        blog['created_time'] = format_time(blog['created_time'])
+
+    return dict(page=p,blogs=blogs)
+
+
+@post('/api/reduction')
+@asyncio.coroutine
+@check_token
+@asyncio.coroutine
+def reduction(request):
+    '''
+    还原已删除的文章
+    '''
+    params = yield from request.json()
+    kw = dict(**params)
+    id = kw['id']
+    if not id or not id.strip():
+        return dict(code=-1,message="文章id不能为空")
+    yield from Blog.update2(id=id,is_del=0)
+    return dict(code=1,message="文章还原成功")
+
+
+@post('/api/delPageRealy')
+@asyncio.coroutine
+@check_token
+@asyncio.coroutine
+def delPageRealy(request):
+    '''
+    彻底删除文章
+    '''
+    params = yield from request.json()
+    kw = dict(**params)
+    id = kw['id']
+    if not id or not id.strip():
+        return dict(code=-1,message="文章id不能为空")
+    page = yield from Blog.find(id)
+    imgpath = page['thumb']
+    yield from page.remove()
+    del_img(imgpath)
+    comments = yield from Comment.findAll('blog_id=?',[id])
+    ids = []
+    for comment in comments:
+        ids.append(comment['id'])
+    if len(ids) >0:
+        yield from Comment.remove2(id=ids)
+    
+    return dict(code=1,message="文章已彻底删除")
+
+
 
 @post('/api/delPage')
 @asyncio.coroutine
@@ -244,7 +310,7 @@ def detail(request,*,id):
 @asyncio.coroutine
 def addComment(request):
     '''
-    添加文章
+    添加留言
     '''
     params = yield from request.json()
     kw = dict(**params)
@@ -261,11 +327,62 @@ def addComment(request):
     else:
         comment = Comment(user_id=userId,blog_id=blogId,user_name=kw['userName'],content=content)
         yield from comment.save()
+        page = yield from Blog.find(blogId)
+        num = page['comment_num']
+        num = num +1
+        yield from Blog.update2(id=blogId,comment_num=num)
+
         result = dict(code=1,message="留言成功")
-    # r = web.Response()
-    # r.content_type='application/json'
-    # r.body=json.dumps(result,ensure_ascii=False).encode('utf-8')
     return result
+
+@get('/api/getComment')
+@asyncio.coroutine
+def getComment(request, *, blogId, pageNum, pageSize):
+    '''
+    获取留言列表
+    '''
+    index = get_page_index(pageNum)
+    size = get_page_index(pageSize)
+    if not blogId or not blogId.strip():
+        return dict(code=-1,message="文章id不能为空")
+    where = "is_del=0 AND blog_id='%s'" % blogId
+    num = yield from Comment.findNumber('count(*)',where=where)
+    p = Page(num,index,size)
+    logging.info('page:%s' % p)
+    if num == 0:
+        return dict(code=1,page=p,comments=())
+    comments = yield from Comment.findAll(where=where,orderBy='created_time desc',limit=(p['offset'],p['size']))
+    for comment in comments:
+        comment['created_time'] = format_time(comment['created_time'])
+
+    return dict(code=1,page=p,comments=comments)
+
+
+@post('/api/delComment')
+@asyncio.coroutine
+@check_token
+@asyncio.coroutine
+def delComment(request):
+    '''
+    删除评论
+    '''
+    params = yield from request.json()
+    kw = dict(**params)
+    if not kw['id'] or not kw['id'].strip():
+        return dict(code=-1,message="id不能为空")
+    elif not kw['blogId'] or not kw['blogId'].strip():
+        return dict(code=-1,message="文章id不能为空")
+    comment = Comment(id=kw['id'])
+    yield from comment.remove()
+    page = yield from Blog.find(kw['blogId'])
+    num = page['comment_num']
+    num = num-1
+    yield from Blog.update2(id=kw['blogId'],comment_num=num)
+    return dict(code=1,message="留言删除成功")
+
+
+
+
 
 
 
@@ -293,12 +410,13 @@ def upload(request):
 
 def Page(num,index,size):
     # 分页
+    total = math.ceil(num/size)
     offset = (index-1)*size
     if index*size < num:
         pageSize = size
     else:
         pageSize = num - offset
-    return dict(offset=offset,size=pageSize)
+    return dict(offset=offset,size=pageSize,total=total)
 
 
 

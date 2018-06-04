@@ -2,21 +2,17 @@
     <div class="page-list">
         <div class="list-header">
             <p class="header-item-title">文章标题</p>
-            <p class="header-item-comment">查看留言</p>
-            <p class="header-item-btns">修改</p>
+            <p class="header-item-btns">还原</p>
         </div>
         <div class="list-item" v-for="item in list">
             <p class="list-item-title">{{item.title}}</p>
-            <p class="list-item-comment" @click="lookComment(item.id)">{{item.comment_num}}</p>
             <p class="list-item-btns">
-                <router-link class="btn edit" :to="{name: 'editPage',params: {id: item.id}}">修改</router-link>
-                <a class="btn delete" @click="delFn(item.id)">删除</a>
+                <a class="btn edit" @click="reduction(item.id)">还原</a>
+                <a class="btn delete" @click="delFn(item.id)">彻底删除</a>
             </p>
         </div>
          <confirms ref="confirms" v-bind:message="message"></confirms>
          <alerts ref="alerts" v-bind:message="message"></alerts>
-         <commentList ref="commentList"  @blog-reload="reloads"></commentList>
-         <load ref="load"></load>
     </div>
    
 </template>
@@ -34,42 +30,33 @@
                 token: ''
             }
         },
-        components: {
-            commentList
-          },
         created(){
              _this = this;
              _this.token = LocalStorage.getItem('token');
-            
-        },
-        mounted(){
             _this.getList();
         },
         methods: {
             getList: ()=>{
-                _this.$refs.load.show();
-                _this.$get('/api/getPage').then((res)=>{
-                    _this.$refs.load.hide();
+                _this.$get('/api/getDelPage').then((res)=>{
                     _this.list = res.blogs;
                     
                 });
             },
             delFn: (id)=>{
-                _this.message = "确定删除?";
+                _this.message = "确定删除?这会一并删除该文章的留言";
                 _this.$refs.confirms.show().then(()=>{
                     console.log('you click sure');
                     _this.delAjax(id);
                 },()=>{
-                    console.log('you click cancel');
+                    console.log('you click cancel')
                 });
             },
             delAjax: (id)=>{
-                _this.$refs.load.show();
-                _this.$post('/api/delPage',{
+                _this.$post('/api/delPageRealy',{
                     id: id,
                     token: _this.token
                 }).then((res)=>{
-                    _this.$refs.load.hide();
+                    console.log(res);
                     if(res.code==1){
                         _this.getList();
                     }
@@ -77,11 +64,17 @@
                     _this.$refs.alerts.show();
                 })
             },
-            lookComment: (id)=>{
-                _this.$refs.commentList.show(id);
-            },
-            reloads: ()=>{
-                 _this.getList();
+            reduction: (id)=>{
+                _this.$post('/api/reduction',{
+                    id: id,
+                    token: _this.token
+                }).then((res)=>{
+                    if(res.code == 1){
+                        _this.getList();
+                    }
+                    _this.message = res.message;
+                    _this.$refs.alerts.show();
+                })
             }
         }
     }

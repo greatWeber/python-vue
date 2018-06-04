@@ -1,0 +1,30 @@
+@charset "UTF-8";
+@font-face {
+  font-family: "font-vue";
+  src: url("../fonts/font-vue.eot");
+  src: url("../fonts/font-vue.eot?#iefix") format("embedded-opentype"), url("../fonts/font-vue.woff") format("woff"), url("../fonts/font-vue.ttf") format("truetype"); }
+
+.icon-vue-blog:before, .icon-vue-loading:before, .icon-vue-next:before, .icon-vue-prev:before, .icon-vue-x:before {
+  font-family: "font-vue";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-decoration: none;
+  text-transform: none; }
+
+.icon-vue-blog:before {
+  content: ""; }
+
+.icon-vue-loading:before {
+  content: ""; }
+
+.icon-vue-next:before {
+  content: ""; }
+
+.icon-vue-prev:before {
+  content: ""; }
+
+.icon-vue-x:before {
+  content: ""; }

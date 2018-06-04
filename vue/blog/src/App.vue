@@ -4,12 +4,14 @@
  <header class="header clear">
   <div class="header-content">
     <div class="fl">
-        <img class="logo" src="./assets/logo.png">
+        <!-- <img class="logo" src="./assets/logo.png"> -->
+        <span class="logo icon-vue-blog"></span>
        <ul class="ul">
          <li  v-bind:class="[Index == 1? 'act': '', 'item']" @click="changeIndex( 1)"><router-link :to="{path:'/home'}">首页</router-link></li>
          <li  v-bind:class="[Index == 2? 'act': '', 'item']" @click="changeIndex( 2)"><router-link :to="{path:'/about'}">关于</router-link></li>
          <li v-if="userName" v-bind:class="[Index == 3? 'act': '', 'item']" @click="changeIndex( 3)"><router-link :to="{path:'/pageList'}">列表文章</router-link></li>
          <li v-if="userName" v-bind:class="[Index == 4? 'act': '', 'item']" @click="changeIndex( 4)"><router-link :to="{path:'/addPage'}">添加文章</router-link></li>
+         <li v-if="userName" v-bind:class="[Index == 6? 'act': '', 'item']" @click="changeIndex( 6)"><router-link :to="{path:'/recycleBin'}">回收站</router-link></li>
 
 
        </ul>
@@ -81,17 +83,13 @@
 </template>
 
 <script>
-import alerts from './components/alerts.vue';
 import {LocalStorage} from './utils/util.js';
 export default {
   name: 'App',
-  components: {
-    alerts
-  },
   data() {
     return {
       userName:'',
-      Index: 0,
+      Index: 1,
       showLogin: false,
       showRegister: false,
       showMask: false,
@@ -117,6 +115,8 @@ export default {
       this.Index =4;
     }else if(path == '/detail'){
       this.Index =5;
+    }else if(path == '/recycleBin'){
+      this.Index =6;
     }
   },
   computed: {
@@ -218,6 +218,7 @@ export default {
 
 <style>
 @import './css/reset.css';
+@import './css/font-vue.css';
 #app {
   width: 100%;
  
@@ -243,6 +244,9 @@ export default {
 .header .logo {
   width: 50px;
   height: 50px;
+  font-size: 30px;
+  display: inline-block;
+  color: #52b983;
 }
 
 .header .logout .name {

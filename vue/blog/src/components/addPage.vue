@@ -23,6 +23,8 @@
         </form>
 
         <alerts ref="alerts" v-bind:message="message"></alerts>
+
+        <load ref="load"></load>
     </div>
    
 
@@ -35,6 +37,7 @@ import 'quill/dist/quill.bubble.css'
 
 import {LocalStorage} from '../utils/util.js'
 import { quillEditor } from 'vue-quill-editor'
+let _this;
     export default {
         name: 'addPage',
         data(){
@@ -56,6 +59,9 @@ import { quillEditor } from 'vue-quill-editor'
             this.userName = LocalStorage.getItem('userName');
             this.token = LocalStorage.getItem('token');
         },
+        mounted(){
+            _this = this;
+        },
         components: {
             quillEditor
       },
@@ -67,18 +73,21 @@ import { quillEditor } from 'vue-quill-editor'
                 var file = e.target.files[0];
                 var formData = new FormData();
                 formData.append('image',file);
+                _this.$refs.load.show();
                _this.$ajax({
                     method: 'POST',
                     url: '/api/upload',
                     data: formData,
                     headers: {'Content-Type':'multipart/form-data'}
                }).then(res=>{
+                _this.$refs.load.hide();
                 var data = res.data;
                 _this.imgsrc = _this.HOST+data.list.path;
                 _this.thumb = data.list.path;
                })
             },
             addPageFn: function(){
+                _this.$refs.load.show();
                 var _this = this;
                 _this.$post('/api/addPage',{
                     userId: _this.userId,
@@ -90,8 +99,13 @@ import { quillEditor } from 'vue-quill-editor'
                     content: _this.content,
                     token: _this.token
                 }).then(res=>{
-                    console.log(res);
-                    console.log(_this.$refs);
+                    _this.$refs.load.hide();
+                    if(res.code == 1){
+                        setTimeout(()=>{
+                            _this.$router.push({path:'pageList'});
+                        },1000)
+                        
+                    }
                     _this.message = res.message;
                     _this.$refs.alerts.show();
                 })

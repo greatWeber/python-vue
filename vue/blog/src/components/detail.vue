@@ -17,11 +17,11 @@
             <a class="send" @click="sendMessage">留言</a>
 
             <div class="list">
-                <div class="list-item">
-                    <p class="name">游客</p>
+                <div class="list-item" v-for="item in list">
+                    <p class="name">{{item.user_name}}</p>
                     <div class="message">
-                        <p class="time">2018-06-01</p>
-                        <div class="text">发表留言说一下</div>
+                        <p class="time">{{item.created_time}}</p>
+                        <div class="text">{{item.content}}</div>
                     </div>
                 </div>
             </div>
@@ -46,6 +46,7 @@
                 userId: '',
                 userName: '',
                 token: '',
+                list: ''
             }
         },
         created(){
@@ -55,6 +56,8 @@
             _this.userName = LocalStorage.getItem('userName');
             _this.token = LocalStorage.getItem('token');
             _this.getDetail();
+
+            _this.getComment();
 
         },
         methods: {
@@ -86,8 +89,28 @@
                 }).then((res)=>{
                     _this.message = res.message;
                     _this.$refs.alerts.show();
+                    if(res.code == 1){
+                        _this.message_content = '';
+                        _this.getComment();
+                    }
                 })
 
+            },
+
+            getComment: ()=>{
+                _this.$get('/api/getComment',{
+                    blogId: _this.id,
+                    pageNum: 0,
+                    pageSize: 10
+                }).then((res)=>{
+                    if(res.code == 1){
+                        _this.list = res.comments;
+                        
+                    }else{
+                        _this.message = res.message;
+                        _this.$refs.alerts.show();
+                    }
+                })
             }
         }
     }

@@ -276,6 +276,18 @@ class Model(dict, metaclass=ModelMetaClass):
         if rows != 1:
             logging.warn('failed to remove record: affected rows %s' % rows)
 
+    @classmethod
+    @asyncio.coroutine
+    def remove2(cls,**kw):
+        args = []
+        params = dict(**kw)
+        val =  ", ".join(params[cls.__primary_key__])
+        args.append(val)
+        _update_ = 'DELETE FROM `%s` WHERE `%s` in (?)' % (cls.__table__, cls.__primary_key__)
+        rows = yield from execute(_update_, args)
+        if rows == 0:
+            logging.warn('failed to update record: affected rows %s' % rows)
+
 
 
 

@@ -85,6 +85,14 @@ def save_img(suffix, content,path='upload'):
         f.write(content)
     return '%s/%s' % (path,img_name)
 
+def del_img(imgpath):
+    '''
+    删除图片
+    '''
+    if os.path.isfile(imgpath):
+        os.remove(imgpath)
+        logging.info('图片已删除')
+
 
 def get_page_index(str):
     '''

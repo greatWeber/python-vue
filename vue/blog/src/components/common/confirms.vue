@@ -24,7 +24,6 @@
     border-radius: 10px;
     background: #f9f9f9;
     text-align: center;
-    line-height: 100px;
     position: fixed;
     top: 0;
     left: 0;
@@ -33,6 +32,11 @@
     margin: auto;
     color: #52b983;
     z-index: 9999;
+
+    p {
+        padding: 50px 10px 0;
+        line-height: 2;
+    }
   }
 
   .btns-box {

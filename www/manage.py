@@ -131,7 +131,7 @@ def init(loop):
     yield from orm.create_pool(loop=loop,user='root',password='root',db='blog')
     app = web.Application(loop=loop, middlewares=[
         logger_factory, response_factory
-        ])
+        ],client_max_size=1024**8)
     cors = aiohttp_cors.setup(app,defaults={
         "*":aiohttp_cors.ResourceOptions(
                 allow_credentials=True,

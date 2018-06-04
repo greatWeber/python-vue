@@ -23,6 +23,7 @@
         </form>
 
         <alerts ref="alerts" v-bind:message="message"></alerts>
+        <load ref="load"></load>
     </div>
    
 
@@ -75,6 +76,7 @@ import { quillEditor } from 'vue-quill-editor'
       },
         methods: {
             upload: function(e){
+                _this.$refs.load.show();
                 var _this = this;
                
                 var file = e.target.files[0];
@@ -86,6 +88,7 @@ import { quillEditor } from 'vue-quill-editor'
                     data: formData,
                     headers: {'Content-Type':'multipart/form-data'}
                }).then(res=>{
+                _this.$refs.load.hide();
                 var data = res.data;
                 _this.imgsrc = _this.HOST+data.list.path;
                 _this.thumb = data.list.path;

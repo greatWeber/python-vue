@@ -5,6 +5,7 @@ import addPage from '@/components/addPage'
 import pageList from '@/components/pageList'
 import editPage from '@/components/editPage'
 import detail from '@/components/detail'
+import recycleBin from '@/components/recycleBin'
 
 Vue.use(Router)
 
@@ -39,6 +40,11 @@ export default new Router({
       path: '/detail/:id',
       name: 'detail',
       component: detail
+    },
+    {
+      path: '/recycleBin',
+      name: 'recycleBin',
+      component: recycleBin
     }
   ]
 })
