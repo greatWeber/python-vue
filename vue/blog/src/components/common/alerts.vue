@@ -44,12 +44,17 @@
 
         },
         methods: {
-            show: function(){
-                var _this = this;
-                _this.isShow = true;
+            show: function(time){
+                let timeout = time || 0;
+
+                let _this = this;
+                setTimeout(()=>{
+                  _this.isShow = true;
                 setTimeout(function(){
                     _this.isShow = false;
                 },1000)
+                }, timeout)
+                
             }
         }
     }

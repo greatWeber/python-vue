@@ -36,6 +36,8 @@ class Blog(Model):
     thumb = StringField(ddl='varchar(500)')
     info = StringField(ddl='varchar(200)')
     content = TextField()
+    imgs = TextField()
+    md = TextField()
     comment_num = IntergerField(default=0)
     is_del = BooleanField()
     created_time = FloatField(default=time.time())

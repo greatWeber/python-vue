@@ -7,31 +7,57 @@
         <div class="thumb">
             <img :src="imgSrc" alt="" class="img">
         </div>
-        <div class="container" v-html="blog.content">
+        <div class="container markdown-body" v-html="blog.content">
             
         </div>
 
         <div class="messageBoard">
             <p class="title-line"><span class="text">留言列表</span></p>
-            <textarea class="textarea" v-model="message_content"></textarea>
+            <quill-editor class="editor-example bubble textarea"
+                      ref="myTextEditor"
+                      :content="message_content"
+                      :options="editorOption"
+                      @change="onEditorChange($event)">
+            </quill-editor>
+            <!-- <textarea class="textarea" v-model="message_content"></textarea> -->
             <a class="send" @click="sendMessage">留言</a>
+            <div class="emoticon">
+                <a class="em-btn icon-vue-em" @click="em_show = !em_show"></a>
+                <div class="em-box" v-show="em_show">
+                    <div class="em-imgs" >
+                        <img v-for="img in em_imgs" class="img" :src="HOST+''+img" @click="choiceImg"></img>
+                    </div>
+                    <ul class="em-ul" >
+                        <li v-for="(em, index) in em_ul" v-bind:class="[em_index == index? 'act': '', 'em-ul-item']" @click="choiceUl(index)">{{em}}</li>
+                    </ul>
+                </div>
+            </div>
 
             <div class="list">
                 <div class="list-item" v-for="item in list">
                     <p class="name">{{item.user_name}}</p>
                     <div class="message">
                         <p class="time">{{item.created_time}}</p>
-                        <div class="text">{{item.content}}</div>
+                        <div class="text" v-html="item.content"></div>
                     </div>
                 </div>
             </div>
         </div>
 
         <alerts ref="alerts" v-bind:message="message"></alerts>
+        <load ref="load"></load>
     </div>
 </template>
 
 <script>
+import 'mavon-editor/dist/css/index.css'
+
+import 'quill/dist/quill.core.css'
+import 'quill/dist/quill.snow.css'
+import 'quill/dist/quill.bubble.css'
+import { quillEditor } from 'vue-quill-editor'
+
+
     let _this = this;
     import {LocalStorage} from '../utils/util.js'
     export default {
@@ -46,8 +72,32 @@
                 userId: '',
                 userName: '',
                 token: '',
-                list: ''
+                list: '',
+                em_show: false,
+                em_imgs: [],
+                em_ul: [],
+                em_data: [],
+                em_index: 0,
+                 editorOption: {
+                    theme: 'bubble',
+                    placeholder: "输入任何留言",
+                    modules: {
+                    toolbar: [
+                      ['bold', 'italic', 'underline', 'strike'],
+                      [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                      [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+                      [{ 'color': [] }, { 'background': [] }],
+                      [{ 'font': [] }],
+                      [{ 'align': [] }],
+                      ['link', 'image'],
+                      ['clean']
+                    ]
+                  }
+                }
             }
+        },
+        components: {
+            quillEditor
         },
         created(){
             _this = this;
@@ -55,14 +105,19 @@
             _this.userId = LocalStorage.getItem('userId');
             _this.userName = LocalStorage.getItem('userName');
             _this.token = LocalStorage.getItem('token');
-            _this.getDetail();
+            
+
+        },
+        mounted(){
+             _this.getDetail();
 
             _this.getComment();
 
+            _this.getEmoticon();
         },
         methods: {
             getDetail: ()=>{
-                _this.$get('/api/detail',{id:_this.id}).then((res)=>{
+                _this.$get(_this,'/api/detail',{id:_this.id}).then((res)=>{
                     if(res.code == 1){
                         _this.blog = res.blog;
                         _this.imgSrc = _this.HOST+res.blog.thumb;
@@ -80,7 +135,7 @@
                     return;
                 }
 
-                _this.$post('/api/addComment',{
+                _this.$post(_this,'/api/addComment',{
                     blogId: _this.id,
                     userId: _this.userId,
                     userName: _this.userName,
@@ -98,7 +153,7 @@
             },
 
             getComment: ()=>{
-                _this.$get('/api/getComment',{
+                _this.$get(_this,'/api/getComment',{
                     blogId: _this.id,
                     pageNum: 0,
                     pageSize: 10
@@ -111,6 +166,35 @@
                         _this.$refs.alerts.show();
                     }
                 })
+            },
+
+            getEmoticon: ()=>{
+                _this.$get(_this,'/api/emoticon').then((res)=>{
+                    console.log(res);
+                    _this.em_data = res.emoticons;
+                    _this.em_ul = res.dirs;
+                    _this.em_imgs = res.emoticons[0].path;
+                })
+            },
+
+            choiceImg: (e)=>{
+                let src = e.target.src;
+                console.log(src);
+                let imgstr = `<img src="${src}"/>`;
+                console.log(imgstr);
+                _this.message_content += imgstr;
+                _this.em_show = ! _this.em_show;
+            },
+            choiceUl: (index)=>{
+                _this.em_index = index;
+                _this.em_imgs = _this.em_data[index].path;
+                
+
+            },
+
+            onEditorChange: (e)=>{
+                console.log(e);
+                _this.message_content = e.html;
             }
         }
     }
@@ -118,6 +202,7 @@
 
 <style scoped lang="scss">
     @import '../css/reset.css';
+    @import '../css/font-vue.css';
     .detail {
 
         .header {
@@ -188,9 +273,68 @@
             }
 
             .send {
+                display: inline-block;
                 padding: 5px 15px;
                 color: #fff;
                 background: #52b983;
+            }
+
+            .emoticon {
+                display: inline-block;
+                position: relative;
+
+                .em-btn {
+                    font-size: 30px;
+                    vertical-align: middle;
+                    margin-left: 10px;
+                }
+
+                .em-box {
+                    position: absolute;
+                    top:-310px;
+                    left:0;
+                    width: 600px;
+                    height: 300px;
+                    background: #fff;
+                    border: 1px solid #eee;
+                }
+
+                .em-imgs {
+                    width: 100%;
+                    height: 250px;
+                    overflow-y: auto;
+                    overflow-x: hidden;
+
+                    .img {
+                        width: 100px;
+                        height: 100px;
+                        margin: 5px;
+                        cursor: pointer;
+                    }
+
+                }
+
+                .em-ul {
+                    width: 100%;
+                    height: 50px;
+                    background: #ccc;
+                    overflow-x: auto;
+                    overflow-y: hidden;
+                    display: flex;
+                }
+
+                .em-ul-item {
+                    cursor: pointer;
+                    height: 100%;
+                    line-height: 50px;
+                    text-align: center;
+                    color: #666;
+                    flex: 1;
+                }
+
+                .act {
+                    background: #eee;
+                }
             }
 
             .list {
@@ -203,6 +347,7 @@
 
                     .name {
                         display: inline-block;
+                        vertical-align: top;
                         height: 50px;
                         width: 50px;
                         line-height: 50px;

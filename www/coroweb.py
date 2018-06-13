@@ -161,6 +161,11 @@ def add_upload(app):
     app.router.add_static('/upload/',path)
     logging.info('add upload %s => %s' % ('/upload/', path))
 
+def add_emoticon(app):
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)),'emoticon')
+    app.router.add_static('/emoticon/',path)
+    logging.info('add emoticon %s => %s' % ('/emoticon/', path))
+
 
 def add_route(app, fn, cors):
     method = getattr(fn,'__method__',None)

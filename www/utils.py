@@ -8,6 +8,7 @@ from aiohttp import web
 
 from models import Token
 
+
 def check_token(func):
     '''
     检查token是否过期
@@ -93,6 +94,14 @@ def del_img(imgpath):
         os.remove(imgpath)
         logging.info('图片已删除')
 
+def del_imgs():
+    '''
+    清理图片
+    '''
+    currentpath = os.path.split(os.path.realpath(__file__))[0];
+    logging.info(currentpath);
+    return
+
 
 def get_page_index(str):
     '''
@@ -113,6 +122,3 @@ def format_time(strtime):
     #strtime: 传进来的时间
     localtime = time.localtime(strtime)
     return time.strftime("%Y-%m-%d", localtime)
-
-
-

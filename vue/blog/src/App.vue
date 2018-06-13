@@ -41,7 +41,7 @@
 
 <!-- 登录框 -->
  <div class="login-box" v-if="showLogin">
-   <form class="form">
+   <form class="form" v-on:keyup.13="loginFn">
      <div class="form-item">
        <label class="label">名称:</label>
        <input type="text" name="" v-model="loginName">
@@ -58,7 +58,7 @@
  </div>
 
  <div class="register-box" v-if="showRegister">
-   <form class="form">
+   <form class="form" v-on:keyup.13="registerFn">
      <div class="form-item">
        <label class="label">名称:</label>
        <input type="text" name="" v-model="registerName">
@@ -79,10 +79,13 @@
  </div>
 
 <alerts ref="alerts" v-bind:message="message"></alerts>
+<load ref="load"></load>
+
 </div>
 </template>
 
 <script>
+let _this;
 import {LocalStorage} from './utils/util.js';
 export default {
   name: 'App',
@@ -102,6 +105,7 @@ export default {
     }
   },
   created() {
+    _this = this;
     // this.userName = window.localStorage.getItem('userName') 
     this.userName = LocalStorage.getItem('userName') 
     var path = this.$route.path;
@@ -137,15 +141,15 @@ export default {
       this.showMask = !this.showMask;
     },
     loginFn: function(){
-      var _this = this;
-      _this.$post('/api/login',{
+      
+      _this.$post(_this,'/api/login',{
         name: _this.loginName,
         psd: _this.loginPsd
       }).then(res=>{
         console.log(res)
          // 显示提示
           _this.message = res.message;
-          _this.$refs.alerts.show();
+          _this.$refs.alerts.show(500);
          if(res.code == 1){
              
               _this.userName = res.list.name;
@@ -165,8 +169,7 @@ export default {
       })
     },
      registerFn: function(){
-      var _this = this;
-      this.$post('/api/register',{
+      this.$post(_this,'/api/register',{
         name: this.registerName,
         psd: this.registerPsd,
         email: this.email
@@ -191,8 +194,7 @@ export default {
       })
     },
     logout: function(){
-      var _this = this;
-      _this.$get('/api/logout').then(res=>{
+      _this.$get(_this,'/api/logout').then(res=>{
           if(res.code == 1){
               _this.showMsg = !_this.showMsg;
               _this.message = res.message;
@@ -328,7 +330,8 @@ export default {
   margin-top: -150px;
   border: 1px solid #333;
   border-radius: 10px;
-  z-index: 999;
+  z-index: 9999;
+  background: #fff;
 }
 
 .mask {

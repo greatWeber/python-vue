@@ -14,7 +14,7 @@ from models import User, Blog, Comment
 
 from jinja2 import Environment, FileSystemLoader
 
-from coroweb import add_routes, add_static, add_upload
+from coroweb import add_routes, add_static, add_upload, add_emoticon
 
 import aiohttp_cors
 
@@ -144,6 +144,7 @@ def init(loop):
     add_routes(app,'handlers',cors)
     add_static(app)
     add_upload(app)
+    add_emoticon(app)
     srv = yield from loop.create_server(app.make_handler(),'127.0.0.1',8088)
     logging.info('server started at http://127.0.0.1:8088...')
     return srv

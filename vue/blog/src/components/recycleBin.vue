@@ -13,13 +13,15 @@
         </div>
          <confirms ref="confirms" v-bind:message="message"></confirms>
          <alerts ref="alerts" v-bind:message="message"></alerts>
+         <load ref="load"></load>
+         <paging ref="paging"></paging>
     </div>
    
 </template>
 
 <script>
     let _this;
-    import {LocalStorage} from '../utils/util.js'
+    import {LocalStorage, checkLogin} from '../utils/util.js'
     import commentList from './commentList.vue'
     export default {
         name: 'pageList',
@@ -27,19 +29,40 @@
             return {
                 list: [],
                 message: '测试',
-                token: ''
+                token: '',
+                total: 1,
+                pageNum: 1,
+                pageSize: 10
             }
         },
         created(){
              _this = this;
+             checkLogin(_this);
              _this.token = LocalStorage.getItem('token');
-            _this.getList();
+            
+        },
+        mounted(){
+            _this.getList(_this.initPaging);
+           
+            
         },
         methods: {
-            getList: ()=>{
-                _this.$get('/api/getDelPage').then((res)=>{
+            getList: (cb)=>{
+                _this.$get(_this,'/api/getDelPage',{
+                    token : _this.token,
+                    pageNum: _this.pageNum,
+                    pageSize: _this.pageSize
+                }).then((res)=>{
                     _this.list = res.blogs;
+                    _this.total = res.page.total;
+                    cb&&cb();
                     
+                });
+            },
+            initPaging: ()=>{
+                _this.$refs.paging.init(_this.total, function(index){
+                    _this.pageNum = index;
+                    _this.getList();
                 });
             },
             delFn: (id)=>{
@@ -52,7 +75,7 @@
                 });
             },
             delAjax: (id)=>{
-                _this.$post('/api/delPageRealy',{
+                _this.$post(_this,'/api/delPageRealy',{
                     id: id,
                     token: _this.token
                 }).then((res)=>{
@@ -65,7 +88,7 @@
                 })
             },
             reduction: (id)=>{
-                _this.$post('/api/reduction',{
+                _this.$post(_this,'/api/reduction',{
                     id: id,
                     token: _this.token
                 }).then((res)=>{
@@ -74,6 +97,18 @@
                     }
                     _this.message = res.message;
                     _this.$refs.alerts.show();
+                })
+            },
+            clearImgs: ()=>{
+                _this.$post(_this,'/api/clearImgs',{
+                    token: _this.token
+                }).then((res)=>{
+                    
+                })
+            },
+            emoticon: ()=>{
+                _this.$get(_this,'/api/emoticon').then((res)=>{
+                    
                 })
             }
         }

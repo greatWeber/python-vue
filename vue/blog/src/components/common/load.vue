@@ -44,7 +44,7 @@
     position: fixed;
     top: 0;
     left: 0;
-    z-index: 998;
+    z-index: 9998;
     width: 100%;
     height: 100%;
     text-align: center;

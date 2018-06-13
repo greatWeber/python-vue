@@ -37,25 +37,27 @@ let _this;
             
         },
         mounted(){
-            _this.getList();
-            _this.$refs.paging.init(_this.total, function(index){
-                _this.pageNum = index;
-                _this.getList();
-            });
+            _this.getList(_this.initPaging);
+            
         },
         methods: {
            imgsrc: function(img){
             return this.host+img
            },
-           getList: ()=>{
-            _this.$refs.load.show();
-            _this.$get('/api/getPage',{pageNum:_this.pageNum,pageSize:_this.pageSize}).then(res=>{
-                _this.$refs.load.hide();
+           getList: (cb)=>{
+            _this.$get(_this,'/api/getPage',{pageNum:_this.pageNum,pageSize:_this.pageSize}).then(res=>{
                  
                 _this.pageList = res.blogs;
                 _this.total = res.page.total;
+                cb&&cb();
             })
-           }
+           },
+           initPaging: ()=>{
+                _this.$refs.paging.init(_this.total, function(index){
+                    _this.pageNum = index;
+                    _this.getList();
+                });
+            },
         }
     }
 </script>

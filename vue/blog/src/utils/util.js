@@ -36,4 +36,11 @@ let LocalStorage = {
     }
 };
 
-export {LocalStorage};
+let checkLogin = (_this)=>{
+    let userName = LocalStorage.getItem('userName');
+    if(!userName){
+         _this.$router.push({path:'home'});
+    }
+}
+
+export {LocalStorage, checkLogin};

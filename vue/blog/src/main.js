@@ -5,6 +5,7 @@ import App from './App'
 import router from './router'
 import {Get, Post} from './utils/http'
 import axios from 'axios'
+import mavonEditor from 'mavon-editor'
 
 import alerts from './components/common/alerts.vue'
 import confirms from './components/common/confirms.vue'
@@ -23,6 +24,8 @@ Vue.component('confirms',confirms);
 Vue.component('paging',paging);
 Vue.component('load',load);
 Vue.config.productionTip = false;
+
+Vue.use(mavonEditor)
 
 /* eslint-disable no-new */
 new Vue({

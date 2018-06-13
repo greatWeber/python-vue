@@ -22,6 +22,7 @@
 
         </transition>
         <alerts ref="alerts" v-bind:message="message"></alerts>
+        <load ref="load"></load>
     </div>
 </template>
 
@@ -54,7 +55,7 @@
                 _this.isShow = false;
             },
             getComment: (blogId)=>{
-                _this.$get('/api/getComment',{
+                _this.$get(_this,'/api/getComment',{
                     blogId: blogId,
                     pageNum: 0,
                     pageSize: 10
@@ -68,7 +69,7 @@
                 })
             },
             delFn: (id)=>{
-                _this.$post('/api/delComment',{
+                _this.$post(_this,'/api/delComment',{
                     id: id,
                     blogId: _this.blogId,
                     token: _this.token
@@ -154,12 +155,17 @@
                 }
 
                 .item-item-name, .item-item-del {
-                    flex: 1;
+                    display: inline-block;
+                    width: 15%;
 
                 }
 
                 .item-item-title {
-                    flex: 3;
+                    width: 65%;
+                    display: inline-block;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
 
                 }
 

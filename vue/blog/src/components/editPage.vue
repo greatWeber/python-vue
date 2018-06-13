@@ -15,9 +15,10 @@
                 <label for="info" class="label">简介</label>
                 <input type="text" id="info" name="info" v-model="info">
             </div>
-            <quillEditor v-model="content"></quillEditor>
+            <!-- <quillEditor v-model="content"></quillEditor> -->
+            <mavon-editor v-model="md" ref=md @imgAdd="$imgAdd" @imgDel="$imgDel" @change="$change"></mavon-editor>
             <div class="form-btn">
-                <span class="btn btn-sure" @click="addPageFn">修改</span>
+                <span class="btn btn-sure" @click="editPageFn">修改</span>
                 <span class="btn btn-cancel" @click="back">返回</span>
             </div>
         </form>
@@ -34,8 +35,9 @@ import 'quill/dist/quill.core.css'
 import 'quill/dist/quill.snow.css'
 import 'quill/dist/quill.bubble.css'
 
-import {LocalStorage} from '../utils/util.js'
+import {LocalStorage, checkLogin} from '../utils/util.js'
 import { quillEditor } from 'vue-quill-editor'
+let _this;
     export default {
         name: 'editPage',
         data(){
@@ -48,28 +50,41 @@ import { quillEditor } from 'vue-quill-editor'
                 thumb: '',
                 token: '',
                 message: '',
+                imgs: [],
+                md: '',
                 id: '',
                 token: ''
             }
         },
         created: function(){
-            let _this = this;
+            _this = this;
+            checkLogin(_this);
            _this.id = _this.$route.params.id;
            _this.userId = LocalStorage.getItem('userId');
            _this.token = LocalStorage.getItem('token');
-           _this.$get('/api/detail',{id: _this.id}).then((res)=>{
+          
+           
+        },
+        mounted(){
+             _this.$get(_this,'/api/detail',{id: _this.id}).then((res)=>{
                 if(res.code == 1){
                     _this.title = res.blog.title;
                     _this.imgsrc = _this.HOST+res.blog.thumb;
                     _this.thumb = res.blog.thumb;
                     _this.info = res.blog.info;
                     _this.content = res.blog.content;
+                    _this.md = res.blog.md;
+                    _this.imgs = res.blog.imgs.split(',');
+                    for(let i=0;i<_this.imgs.length;i++){
+                        _this.$refs.md.$imgAddByUrl(i,_this.HOST+_this.imgs[i]);
+                        console.log(_this.HOST+_this.imgs[i]);
+                    }
+                    
                 }else{
                     _this.message = res.message;
                     _this.$refs.alerts.show();
                 }
            })
-           
         },
         components: {
             quillEditor
@@ -94,25 +109,59 @@ import { quillEditor } from 'vue-quill-editor'
                 _this.thumb = data.list.path;
                })
             },
-            addPageFn: function(){
-                var _this = this;
-                _this.$post('/api/editPage',{
+            editPageFn: function(){
+                _this.getImgs(_this.md);
+                _this.$post(_this,'/api/editPage',{
                     userId: _this.userId,
                     id: _this.id,
                     title: _this.title,
                     thumb: _this.thumb,
                     info: _this.info,
                     content: _this.content,
+                    imgs: _this.imgs.join(','),
+                    md: _this.md,
                     token: _this.token
                 }).then(res=>{
-                    console.log(res);
-                    console.log(_this.$refs);
                     _this.message = res.message;
                     _this.$refs.alerts.show();
                 })
             },
             back: function(){
                 window.history.back(-1);
+            },
+            $imgAdd: (pos, $file)=>{
+                let formData = new FormData();
+                formData.append('image',$file);
+                _this.$ajax({
+                    method: 'POST',
+                    url: '/api/upload',
+                    data: formData,
+                    headers: {'Content-Type':'multipart/form-data'}
+               }).then(res=>{
+                let data = res.data;
+                // _this.imgs.push(data.list.path);
+                _this.$refs.md.$img2Url(pos,_this.HOST+data.list.path);
+                // console.log(_this.imgs);
+               })
+                
+            },
+            $imgDel: (pos)=>{
+                console.log(pos);
+                // _this.imgs.splice(pos, 1);
+                // _this.$refs.md.$refs.toolbar_left.$imgDelByFilename(pos);
+                // console.log(_this.imgs);
+            },
+            $change: (value ,render)=>{
+                _this.md = value;
+                _this.content = render;
+
+            },
+
+            getImgs: (text)=>{
+                let reg = new RegExp(_this.HOST+'(/upload[0-9,a-z,/,.]+)','g');
+                text.replace(reg,($0,$1)=>{
+                    _this.imgs.push($1);
+                })
             }
         }
     }

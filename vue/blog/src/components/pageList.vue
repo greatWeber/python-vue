@@ -17,13 +17,14 @@
          <alerts ref="alerts" v-bind:message="message"></alerts>
          <commentList ref="commentList"  @blog-reload="reloads"></commentList>
          <load ref="load"></load>
+         <paging ref="paging"></paging>
     </div>
    
 </template>
 
 <script>
     let _this;
-    import {LocalStorage} from '../utils/util.js'
+    import {LocalStorage, checkLogin} from '../utils/util.js'
     import commentList from './commentList.vue'
     export default {
         name: 'pageList',
@@ -31,7 +32,10 @@
             return {
                 list: [],
                 message: '测试',
-                token: ''
+                token: '',
+                total: 1,
+                pageNum: 1,
+                pageSize: 10
             }
         },
         components: {
@@ -39,19 +43,32 @@
           },
         created(){
              _this = this;
+             checkLogin(_this);
              _this.token = LocalStorage.getItem('token');
             
         },
         mounted(){
-            _this.getList();
+            _this.getList(_this.initPaging);
+            
+           
         },
         methods: {
-            getList: ()=>{
-                _this.$refs.load.show();
-                _this.$get('/api/getPage').then((res)=>{
-                    _this.$refs.load.hide();
+            getList: (cb)=>{
+
+                _this.$get(_this,'/api/getPage',{
+                    token : _this.token,
+                    pageNum: _this.pageNum,
+                    pageSize: _this.pageSize
+                }).then((res)=>{
                     _this.list = res.blogs;
-                    
+                    _this.total = res.page.total;
+                    cb&&cb(); 
+                });
+            },
+            initPaging: ()=>{
+                _this.$refs.paging.init(_this.total, function(index){
+                    _this.pageNum = index;
+                    _this.getList();
                 });
             },
             delFn: (id)=>{
@@ -64,12 +81,10 @@
                 });
             },
             delAjax: (id)=>{
-                _this.$refs.load.show();
-                _this.$post('/api/delPage',{
+                _this.$post(_this,'/api/delPage',{
                     id: id,
                     token: _this.token
                 }).then((res)=>{
-                    _this.$refs.load.hide();
                     if(res.code==1){
                         _this.getList();
                     }

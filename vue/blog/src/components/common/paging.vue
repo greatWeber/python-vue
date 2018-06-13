@@ -1,5 +1,5 @@
 <template>
-    <div style="text-align: center;">
+    <div style="text-align: center;" v-if="show">
          <div class="paging" ref="paging">
             <span class=" paging-prev icon-vue-prev"></span>
             <span v-bind:class="[item == current? 'act': '', 'paging-item']" v-for="item in pageList" v-bind:data-index="item">{{item}}</span>
@@ -24,7 +24,8 @@
                 current: 1, //当前页数
                 half: 3, //中心点
                 pageList: [1],
-                paging: null
+                paging: null,
+                show: true
             }
         },
         mounted(){
@@ -35,6 +36,12 @@
             init: (num,cb)=>{
                 let pageList = [];
                 _this.total = num;
+                if(num==0){
+                    _this.show = false;
+                    return;
+                }else{
+                    _this.show = true;
+                }
                 for(let i=1;i<=num;i++){
                     if(pageList.length<5){
                         pageList.push(i);

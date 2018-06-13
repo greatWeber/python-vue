@@ -140,7 +140,7 @@ def addPage(request):
     elif not title or not title.strip():
         result = dict(code=-1, message="标题不能为空")
     else:
-        page = Blog(user_id=userId,user_name=kw['userName'],user_image=kw['userImage'],title=title,info=kw['info'],thumb=kw['thumb'],content=kw['content'])
+        page = Blog(user_id=userId,user_name=kw['userName'],user_image=kw['userImage'],title=title,info=kw['info'],thumb=kw['thumb'],content=kw['content'],imgs=kw['imgs'],md=kw['md'])
         yield from page.save()
         result = dict(code=1,message="文章添加成功")
     r = web.Response()
@@ -169,7 +169,7 @@ def editPage(request):
         result = dict(code=-1, message="标题不能为空")
     else:
         # page = Blog(id=pid,user_id=userId,title=title,info=kw['info'],thumb=kw['thumb'],content=kw['content'])
-        yield from Blog.update2(id=pid,user_id=userId,title=title,info=kw['info'],thumb=kw['thumb'],content=kw['content'])
+        yield from Blog.update2(id=pid,user_id=userId,title=title,info=kw['info'],thumb=kw['thumb'],content=kw['content'],imgs=kw['imgs'],md=kw['md'])
         result = dict(code=1,message="文章修改成功")
     # r = web.Response()
     # r.content_type='application/json'
@@ -380,6 +380,46 @@ def delComment(request):
     yield from Blog.update2(id=kw['blogId'],comment_num=num)
     return dict(code=1,message="留言删除成功")
 
+
+@post('/api/clearImgs')
+@asyncio.coroutine
+def clearImgs(request):
+    '''
+    清理图片
+    '''
+    pages = yield from Blog.findAll();
+    imgs = []
+    for page in pages:
+        imgs.append(page['thumb'])
+        img = page['imgs'].split(',')
+        for i in img:
+            imgs.append(i)
+    currentpath = os.path.abspath('.')
+    upload = os.path.join(currentpath,'upload')
+    #列出当前目录下的所有文件
+    dirs = ['upload/'+x for x in os.listdir(upload) if os.path.splitext(x)]
+    for img in dirs:
+        if img not in imgs:
+            os.remove(img)
+
+    return dict()
+
+
+@get('/api/emoticon')
+@asyncio.coroutine
+def emoticon(request):
+    currentpath = os.path.abspath('.')
+    emoticon = os.path.join(currentpath,'emoticon')
+    dirs = [x for x in os.listdir(emoticon)]
+    logging.info(dirs)
+    emoticons = [];
+    for Dir in dirs:
+        imgDir = os.path.join(emoticon,Dir)
+        imgs = ['emoticon/'+Dir+'/'+x for x in os.listdir(imgDir)]
+        imgDict = dict(path=imgs,dir=Dir)
+        emoticons.append(imgDict)
+        logging.info(emoticons)
+    return dict(code=1,message="表情包获取成功",emoticons=emoticons,dirs=dirs)
 
 
 
