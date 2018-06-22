@@ -4,12 +4,21 @@
             <p class="header-item-title">文章标题</p>
             <p class="header-item-btns">还原</p>
         </div>
-        <div class="list-item" v-for="item in list">
+        <div class="list-item" v-for="(item, index) in list">
+            <span v-bind:class="[item.checked == true? 'checked-act': '', 'icon-vue-checked']" @click="changeDel(index)"></span>
             <p class="list-item-title">{{item.title}}</p>
             <p class="list-item-btns">
                 <a class="btn edit" @click="reduction(item.id)">还原</a>
                 <a class="btn delete" @click="delFn(item.id)">彻底删除</a>
             </p>
+        </div>
+        <div class="page-check">
+            <p class="checkall">
+                <span v-bind:class="[allChecked == true? 'checked-act': '', 'icon-vue-checked']"></span>
+                <span @click="checkAll">全选</span>
+            </p>
+            <a class="btn edit" @click="reductions">还原</a>
+            <a class="btn delete" @click="delsFn">彻底删除</a>
         </div>
          <confirms ref="confirms" v-bind:message="message"></confirms>
          <alerts ref="alerts" v-bind:message="message"></alerts>
@@ -32,7 +41,9 @@
                 token: '',
                 total: 1,
                 pageNum: 1,
-                pageSize: 10
+                pageSize: 10,
+                ids: [],
+                allChecked: false
             }
         },
         created(){
@@ -53,6 +64,10 @@
                     pageNum: _this.pageNum,
                     pageSize: _this.pageSize
                 }).then((res)=>{
+                    let list = res.blogs;
+                    for(let i=0;i<list.length;i++){
+                        list[i].checked = false;
+                    }
                     _this.list = res.blogs;
                     _this.total = res.page.total;
                     cb&&cb();
@@ -87,6 +102,22 @@
                     _this.$refs.alerts.show();
                 })
             },
+            delsFn: ()=>{
+                let list = _this.list;
+                let ids = [];
+                for(let i=0;i<list.length;i++){
+                    if(list[i].checked){
+                        ids.push(list[i].id);
+                    }
+                }
+                if(ids.length==0){
+                    _this.message = "请选择要删除的文章";
+                    _this.$refs.alerts.show();
+                    return;
+                }
+                _this.allChecked = false;
+                _this.delAjax(ids.join(','));
+            },
             reduction: (id)=>{
                 _this.$post(_this,'/api/reduction',{
                     id: id,
@@ -99,6 +130,22 @@
                     _this.$refs.alerts.show();
                 })
             },
+            reductions: function(){
+                let list = _this.list;
+                let ids = [];
+                for(let i=0;i<list.length;i++){
+                    if(list[i].checked){
+                        ids.push(list[i].id);
+                    }
+                }
+                if(ids.length==0){
+                    _this.message = "请选择要还原的文章";
+                    _this.$refs.alerts.show();
+                    return;
+                }
+                _this.allChecked = false;
+                _this.reduction(ids.join(','));
+            },
             clearImgs: ()=>{
                 _this.$post(_this,'/api/clearImgs',{
                     token: _this.token
@@ -110,6 +157,40 @@
                 _this.$get(_this,'/api/emoticon').then((res)=>{
                     
                 })
+            },
+            changeDel: (index)=>{
+                _this.list[index].checked = !_this.list[index].checked;
+                let list = _this.list;
+                let num=0;
+                let len = list.length;
+                for(let i=0;i<len;i++){
+                    if(list[i].checked){
+                        num++;
+                    }
+                }
+                if(num == len){
+                    _this.allChecked = true;
+                }else{
+                    _this.allChecked = false;
+                }
+
+            },
+            checkAll: ()=>{
+                let allChecked = _this.allChecked;
+                let list = _this.list;
+                let len = list.length;
+                if(allChecked){
+                    for(let i=0;i<len;i++){
+                        list[i].checked = false;
+                    }
+                }else{
+                    for(let i=0;i<len;i++){
+                        list[i].checked = true;
+                    }
+                }
+                allChecked = !allChecked;
+                _this.allChecked = allChecked;
+                _this.list = list;
             }
         }
     }
@@ -117,6 +198,7 @@
 
 <style scoped lang="scss">
 @import '../css/reset.css';
+@import '../css/font-vue.css';
 .page-list {
     width: 100%;
     padding: 50px 0;
@@ -170,29 +252,51 @@
     
 }
 
+.btn {
+    display: inline-block;
+    height: 20px;
+    padding: 5px 10px;
+    margin: 15px 10px;
+    line-height: 20px;
+    border-radius: 3px;
+    color: #fff;
+}
+
+.edit {
+    background: #52b983;
+}
+
+.delete {
+    background: #db683b;
+}
+
 .list-item-btns {
     flex: 2;
 
-    .btn {
-        display: inline-block;
-        height: 20px;
-        padding: 5px 10px;
-        margin: 15px 10px;
-        line-height: 20px;
-        border-radius: 3px;
-        color: #fff;
-    }
-
-    .edit {
-        background: #52b983;
-    }
-
-    .delete {
-        background: #db683b;
-    }
+    
     
 }
 
+.icon-vue-checked {
+    font-size: 20px;
+    color: #ccc;
+    vertical-align: middle;
+    cursor: pointer; 
+}
+
+.checked-act {
+    color: #52b983;
+}
+
+.page-check {
+    width: 100%;
+    line-height: 50px;
+
+    .checkall {
+        cursor: pointer;
+        display: inline-block;
+    }
+}
 
 
 </style>

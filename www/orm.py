@@ -259,14 +259,33 @@ class Model(dict, metaclass=ModelMetaClass):
 
         params = dict(**kw)
         for k,v in params.items():
-            fields.append(k)
-            value.append(v)
+            if k != cls.__primary_key__:
+                fields.append(k)
+                value.append(v)
         args =  value
         args.append(params[cls.__primary_key__])
         _update_ = 'UPDATE `%s` SET %s WHERE `%s`=?' % (cls.__table__,', '.join(map(lambda f: '%s=?'%(cls.__mappings__.get(f).name or f ), fields)), cls.__primary_key__)
         rows = yield from execute(_update_, args)
         if rows != 1:
             logging.warn('failed to update record: affected rows %s' % rows)
+
+    @classmethod
+    @asyncio.coroutine
+    def updateAll(cls,**kw):
+        fields = []
+        value = []
+
+        params = dict(**kw)
+        for k,v in params.items():
+            if k != cls.__primary_key__:
+                fields.append(k)
+                value.append(v)
+        args =  value
+        keys = params[cls.__primary_key__]
+        for k in keys:
+            args.append(k)
+        _update_ = 'UPDATE `%s` SET %s WHERE `%s`in(%s)' % (cls.__table__,', '.join(map(lambda f: '%s=?'%(cls.__mappings__.get(f).name or f ), fields)), cls.__primary_key__,', '.join(map(lambda f: '?', keys)))
+        rows = yield from execute(_update_, args)
 
 
     @asyncio.coroutine
@@ -281,9 +300,10 @@ class Model(dict, metaclass=ModelMetaClass):
     def remove2(cls,**kw):
         args = []
         params = dict(**kw)
-        val =  ", ".join(params[cls.__primary_key__])
-        args.append(val)
-        _update_ = 'DELETE FROM `%s` WHERE `%s` in (?)' % (cls.__table__, cls.__primary_key__)
+        keys = params[cls.__primary_key__]
+        for k in keys:
+            args.append(k)
+        _update_ = 'DELETE FROM `%s` WHERE `%s` in (%s)' % (cls.__table__, cls.__primary_key__, ', '.join(map(lambda f: '?', keys)))
         rows = yield from execute(_update_, args)
         if rows == 0:
             logging.warn('failed to update record: affected rows %s' % rows)

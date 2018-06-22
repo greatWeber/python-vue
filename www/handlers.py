@@ -229,7 +229,8 @@ def reduction(request):
     id = kw['id']
     if not id or not id.strip():
         return dict(code=-1,message="文章id不能为空")
-    yield from Blog.update2(id=id,is_del=0)
+    ids = id.split(',')
+    yield from Blog.updateAll(id=ids,is_del=0)
     return dict(code=1,message="文章还原成功")
 
 
@@ -246,16 +247,19 @@ def delPageRealy(request):
     id = kw['id']
     if not id or not id.strip():
         return dict(code=-1,message="文章id不能为空")
-    page = yield from Blog.find(id)
-    imgpath = page['thumb']
-    yield from page.remove()
-    del_img(imgpath)
-    comments = yield from Comment.findAll('blog_id=?',[id])
-    ids = []
-    for comment in comments:
-        ids.append(comment['id'])
-    if len(ids) >0:
-        yield from Comment.remove2(id=ids)
+    ids = id.split(',')
+    for id in ids:
+        page = yield from Blog.find(id)
+        imgpath = page['thumb']
+        yield from page.remove()
+        del_img(imgpath)
+        comments = yield from Comment.findAll('blog_id=?',[id])
+        ids = []
+        for comment in comments:
+            ids.append(comment['id'])
+        if len(ids) >0:
+            yield from Comment.remove2(id=ids)
+        
     
     return dict(code=1,message="文章已彻底删除")
 
@@ -274,7 +278,13 @@ def delPage(request):
     pid = kw['id']
     if not pid or not pid.strip():
         result = dict(code=-1,message="id不能为空")
-    yield from Blog.update2(id=pid,is_del=True)
+    ids = pid.split(',')
+    yield from Blog.updateAll(id=ids,is_del=True)
+
+    # if len(ids)>1:
+    #     yield from Blog.updateAll(id=ids,is_del=True)
+    # else:
+    #     yield from Blog.update2(id=pid,is_del=True)
     result = dict(code=1,message="删除成功")
     return result;
     
